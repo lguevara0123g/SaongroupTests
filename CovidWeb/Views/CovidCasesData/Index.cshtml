@@ -1,0 +1,60 @@
+﻿<!--model IEnumerable<CovidDataModels.CovidCaseData>-->
+@model CovidWeb.Models.CovidDataSet
+
+@{
+    ViewBag.Title = "Index";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<h2>Covid cases</h2>
+@using (Html.BeginForm())
+{ 
+<div>
+    Region
+    <select name="SelectedRegion" class="form-control unset-display">
+        <option></option>
+        @foreach (var item in Model.Regions)
+        {
+            <option @(item==Request.Form["SelectedRegion"]?"selected":"") value="@item">@item</option>
+        }
+    </select>
+    <input type="submit" value="Report" />
+    @if(Model.CovidCasesData.Count > 0) { 
+    <div class="export-bar">
+        @Html.ActionLink("XML", "Download", new { fileFormat = "XML", selectedRegion = Request.Form["SelectedRegion"] }, new { target = "_blank" }) | 
+        @Html.ActionLink("JSON", "Download", new { fileFormat = "JSON", selectedRegion = Request.Form["SelectedRegion"] }, new { target = "_blank" }) | 
+        @Html.ActionLink("CSV", "Download", new { fileFormat = "CSV", selectedRegion = Request.Form["SelectedRegion"] }, new { target = "_blank" }) | 
+    </div>
+    }
+</div>
+}
+<br />
+<table class="table">
+    <tr>
+        <th>
+            @Model.RegionProvince
+        </th>
+        <th>
+            @Html.DisplayNameFor(model => model.CovidCasesData.FirstOrDefault().confirmed)
+        </th>
+        <th>
+            @Html.DisplayNameFor(model => model.CovidCasesData.FirstOrDefault().deaths)
+        </th>        
+    </tr>
+
+@foreach (var item in Model.CovidCasesData)
+{
+    <tr>
+        <td>
+            @(!String.IsNullOrEmpty(Model.SelectedRegion) ? item.region.province : item.region.name)
+        </td>
+        <td>
+            @Html.DisplayFor(modelItem => item.confirmed)
+        </td>
+        <td>
+            @Html.DisplayFor(modelItem => item.deaths)
+        </td>
+    </tr>
+}
+
+</table>
