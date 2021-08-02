@@ -14,6 +14,25 @@ namespace CovidWeb.Controllers
     public class CovidCasesDataController : Controller
     {
         CovidCasesDataProcessor _proc = new CovidCasesDataProcessor();
+        IEnumerable<object> GetDataToDownload(string selectedRegion = null)
+        {   
+
+            IEnumerable<object> downloadData;
+            if (String.IsNullOrEmpty(selectedRegion))
+            {
+                var rawData = _proc.GetData().Where(p => String.IsNullOrEmpty(p.region.province)).OrderByDescending(p => p.confirmed).Take(10).ToList();
+                downloadData = rawData.Select(p => new { Region = p.region.name, CASES = p.confirmed, DEATHS = p.deaths });
+            }
+            else
+            {
+                _proc.RegionName = selectedRegion;
+                var rawData = _proc.GetData().Where(p => !String.IsNullOrEmpty(p.region.province)).OrderByDescending(p => p.confirmed).Take(10).ToList();
+                downloadData = rawData.Select(p => new { Province = p.region.province, CASES = p.confirmed, DEATHS = p.deaths });
+            }
+
+            return downloadData;
+
+        }
         CovidDataSet GetData(string selecteRegion = null)
         {            
             var rawData = _proc.GetData();
@@ -57,14 +76,8 @@ namespace CovidWeb.Controllers
         }
         public ActionResult Download(string fileFormat, string selectedRegion)
         {
-            var ds = GetData(selectedRegion);
-            IEnumerable<object> exportData;
-            if (String.IsNullOrEmpty(selectedRegion))
-                exportData = ds.CovidCasesData.Select(p => new { Region = p.region.name, CASES = p.confirmed, DEATHS = p.deaths }) ;
-            else
-                exportData = ds.CovidCasesData.Select(p => new { Province = p.region.province, CASES = p.confirmed, DEATHS = p.deaths }) ;
-            
-            string strData = GetSerializedStr(fileFormat, exportData);
+            var downloadData = GetDataToDownload(selectedRegion);
+            string strData = GetSerializedStr(fileFormat, downloadData);
 
             return File(System.Text.Encoding.UTF8.GetBytes(strData), "text/plain", $"CovidData.{fileFormat.ToLower()}");
         }
